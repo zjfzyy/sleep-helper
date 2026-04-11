@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>助眠</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- 场景容器 -->
+    <div id="scene-container">
+        <canvas id="scene-canvas"></canvas>
+    </div>
+
+    <!-- 内容层 -->
+    <div id="content">
+        <!-- 主界面 -->
+        <div id="setup-view" class="view">
+            <!-- 场景选择 -->
+            <div class="scene-selector">
+                <div class="scene-options">
+                    <button class="scene-btn active" data-scene="starryNight" title="星空">
+                        <span class="scene-icon">🌙</span>
+                    </button>
+                    <button class="scene-btn" data-scene="beach" title="海滩">
+                        <span class="scene-icon">🌊</span>
+                    </button>
+                    <button class="scene-btn" data-scene="forest" title="森林">
+                        <span class="scene-icon">🌲</span>
+                    </button>
+                    <button class="scene-btn" data-scene="flowerField" title="花田">
+                        <span class="scene-icon">🌸</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <!-- 时长设置 -->
+                <div class="panel">
+                    <div class="panel-title">睡眠时长</div>
+                    <div class="duration-display">
+                        <span id="duration-value">30</span> 分钟
+                    </div>
+                    <input type="range" id="duration-slider" min="10" max="90" value="30" step="5">
+                </div>
+
+                <!-- 音乐选择 -->
+                <div class="panel">
+                    <div class="panel-title">背景音乐</div>
+                    <label class="file-input-label">
+                        <input type="file" id="music-input" accept="audio/*" hidden>
+                        <span id="music-name">点击选择音乐文件</span>
+                    </label>
+                </div>
+
+                <!-- 双耳节拍设置 -->
+                <div class="panel collapsible" id="binaural-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">双耳节拍</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="setting-row">
+                            <label>基础频率</label>
+                            <input type="range" id="base-freq" min="100" max="500" value="200" step="10">
+                            <span id="base-freq-value">200 Hz</span>
+                        </div>
+                        <div class="setting-row">
+                            <label>节拍频率</label>
+                            <input type="range" id="beat-freq" min="0.5" max="40" value="4" step="0.5">
+                            <span id="beat-freq-value">4 Hz</span>
+                        </div>
+                        <div class="setting-row">
+                            <label>音量</label>
+                            <input type="range" id="binaural-volume" min="0" max="1" value="0.3" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 开始按钮 -->
+                <button id="start-btn" class="btn btn-primary start-btn">开始睡眠</button>
+            </div>
+        </div>
+
+        <!-- 运行中界面 -->
+        <div id="session-view" class="view hidden">
+            <!-- 倒计时 -->
+            <div class="session-info">
+                <div class="timer">
+                    <span id="time-remaining">30:00</span>
+                </div>
+                <div class="phase-indicator">
+                    <span id="phase-name">引导阶段</span>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                    <div class="progress-markers">
+                        <span class="marker" style="left: 15%">引导</span>
+                        <span class="marker" style="left: 85%">唤醒</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前状态 -->
+            <div class="session-status">
+                <div id="binaural-status">
+                    🔇 双耳节拍: <span id="current-beat">4</span> Hz
+                </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="session-controls">
+                <button id="pause-btn" class="btn btn-secondary">暂停</button>
+                <button id="stop-btn" class="btn btn-secondary">停止</button>
+            </div>
+
+            <!-- 高级设置（可滑动展开）-->
+            <div class="advanced-panel" id="advanced-panel">
+                <div class="drag-handle"></div>
+                <div class="advanced-content">
+                    <div class="panel-title">高级设置</div>
+                    <!-- 可添加更多高级控件 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/audio-engine.js"></script>
+    <script src="js/binaural-beats.js"></script>
+    <script src="js/scene-manager.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('SW registered:', reg.scope))
+                    .catch((err) => console.error('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

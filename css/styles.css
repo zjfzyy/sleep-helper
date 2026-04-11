@@ -1,0 +1,358 @@
+/* 基础重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #0a0a1a;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* 全屏场景容器 */
+#scene-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#scene-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* 内容层 */
+#content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 隐藏状态 */
+.hidden {
+    display: none !important;
+}
+
+/* 滑块样式 */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 按钮样式 */
+.btn {
+    padding: 16px 32px;
+    border: none;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0a0a1a;
+}
+
+.btn-primary:active {
+    transform: scale(0.95);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* 面板样式 */
+.panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+/* 标题样式 */
+.panel-title {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 场景选择器 */
+.scene-selector {
+    padding: 20px 0;
+}
+
+.scene-options {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.scene-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scene-btn.active {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.scene-icon {
+    font-size: 28px;
+}
+
+/* 控制面板 */
+.controls {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 20px;
+}
+
+.duration-display {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 200;
+    margin-bottom: 16px;
+}
+
+.duration-display span {
+    font-weight: 600;
+}
+
+/* 文件选择 */
+.file-input-label {
+    display: block;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.file-input-label:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 可折叠面板 */
+.panel.collapsible .panel-content {
+    display: none;
+}
+
+.panel.collapsible.open .panel-content {
+    display: block;
+}
+
+.toggle-icon {
+    transition: transform 0.3s;
+}
+
+.panel.collapsible.open .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.setting-row label {
+    flex: 0 0 80px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.setting-row input[type="range"] {
+    flex: 1;
+}
+
+.setting-row span {
+    flex: 0 0 70px;
+    text-align: right;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 开始按钮 */
+.start-btn {
+    width: 100%;
+    margin-top: 16px;
+}
+
+/* 运行界面 */
+#session-view {
+    justify-content: center;
+    align-items: center;
+}
+
+.session-info {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.timer {
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: 4px;
+}
+
+.phase-indicator {
+    margin-top: 16px;
+    padding: 8px 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: inline-block;
+}
+
+#phase-name {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 进度条 */
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 40px;
+}
+
+.progress-bar {
+    position: relative;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a90a4, #6bc5d9);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.5s linear;
+}
+
+.progress-markers {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    right: 0;
+}
+
+.marker {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* 状态显示 */
+.session-status {
+    margin-bottom: 40px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 控制按钮 */
+.session-controls {
+    display: flex;
+    gap: 20px;
+}
+
+.session-controls .btn {
+    min-width: 120px;
+}
+
+/* 高级面板 */
+.advanced-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(20, 20, 40, 0.95);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 20px 40px;
+    transform: translateY(calc(100% - 40px));
+    transition: transform 0.3s ease;
+}
+
+.advanced-panel.open {
+    transform: translateY(0);
+}
+
+.drag-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 8px auto 16px;
+}
+
+/* 视图容器 */
+.view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 面板头部 */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.panel-header .panel-title {
+    margin-bottom: 0;
+}
