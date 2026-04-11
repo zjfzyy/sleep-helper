@@ -139,11 +139,16 @@
     <script src="js/scene-manager.js"></script>
     <script src="js/app.js"></script>
     <script>
+        // Service Worker 注册 - 使用相对路径
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((reg) => console.log('SW registered:', reg.scope))
-                    .catch((err) => console.error('SW registration failed:', err));
+                navigator.serviceWorker.register('sw.js')
+                    .then((reg) => {
+                        console.log('SW registered:', reg.scope);
+                    })
+                    .catch((err) => {
+                        console.warn('SW registration failed (page will work offline):', err);
+                    });
             });
         }
     </script>

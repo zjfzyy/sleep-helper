@@ -1,0 +1,10 @@
+{
+  "name": "sleep-aid-app",
+  "version": 2,
+  "builds": [
+    {
+      "src": "**",
+      "use": "@vercel/static"
+    }
+  ]
+}
