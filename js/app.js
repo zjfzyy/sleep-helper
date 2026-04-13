@@ -310,7 +310,7 @@ class SessionController {
     tick() {
         if (!this.isRunning || this.isPaused) return;
 
-        const { ratio, remaining, phase } = this.getProgress();
+        const { ratio, remaining, phase, currentBeatFreq } = this.getProgress();
 
         // 检查阶段变化
         if (phase.index !== this.currentPhaseIndex) {
@@ -322,7 +322,7 @@ class SessionController {
         this.updateAudioForRatio(ratio);
 
         // 通知 UI 更新
-        this.onProgressUpdate?.({ ratio, remaining, phase });
+        this.onProgressUpdate?.({ ratio, remaining, phase, currentBeatFreq });
 
         // 检查是否结束
         if (ratio >= 1) {
@@ -387,6 +387,16 @@ class SleepAidApp {
 
         // 初始化会话控制器
         this.sessionController = new SessionController(audioEngine);
+
+        // iOS Safari 要求首次用户交互后才能创建 AudioContext
+        // 在用户首次点击/触摸时预初始化 AudioContext
+        const initAudioOnInteraction = () => {
+            audioEngine.init().catch(console.warn);
+            document.removeEventListener('touchstart', initAudioOnInteraction);
+            document.removeEventListener('click', initAudioOnInteraction);
+        };
+        document.addEventListener('touchstart', initAudioOnInteraction, { once: true, passive: true });
+        document.addEventListener('click', initAudioOnInteraction, { once: true, passive: true });
 
         // 绑定事件
         this.bindEvents();
@@ -631,7 +641,7 @@ class SleepAidApp {
             `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         document.getElementById('progress-fill').style.width = `${data.ratio * 100}%`;
         document.getElementById('current-beat').textContent =
-            data.currentBeatFreq > 0 ? data.currentBeatFreq.toFixed(1) : '10.0';
+            (data.currentBeatFreq ?? 4).toFixed(1);
     }
 
     onPhaseChange(data) {

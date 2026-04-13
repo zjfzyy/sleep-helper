@@ -51,7 +51,9 @@ class AudioEngine {
     // 播放
     play() {
         if (this.audioContext?.state === 'suspended') {
-            this.audioContext.resume();
+            return this.audioContext.resume().then(() => {
+                return this.audioElement?.play();
+            });
         }
         return this.audioElement?.play();
     }
@@ -103,8 +105,14 @@ class AudioEngine {
     }
 
     // 开始双耳节拍
-    startBinauralBeats(baseFreq = 200, beatFreq = 4) {
+    async startBinauralBeats(baseFreq = 200, beatFreq = 4) {
         if (!this.binauralBeats) this.initBinauralBeats();
+
+        // 确保 AudioContext 处于运行状态（iOS Safari 需要）
+        if (this.audioContext?.state === 'suspended') {
+            await this.audioContext.resume();
+        }
+
         this.binauralBeats.setFrequency(baseFreq, beatFreq);
         this.binauralBeats.setVolume(0.3);
         this.binauralBeats.start();
