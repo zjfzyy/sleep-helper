@@ -114,7 +114,7 @@ class AudioEngine {
         }
 
         this.binauralBeats.setFrequency(baseFreq, beatFreq);
-        this.binauralBeats.setVolume(0.3);
+        this.binauralBeats.setVolume(0.5);
         this.binauralBeats.start();
     }
 

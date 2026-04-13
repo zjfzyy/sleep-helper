@@ -169,18 +169,19 @@ class SessionController {
         this.sleepMode = 'night'; // 'night' 或 'nap'
 
         // 晚间模式配置（四阶段）
+        // Alpha波(8-12Hz)引导放松，Theta波(4-8Hz)浅睡，Delta波(0.5-4Hz)深睡，Beta波(15-30Hz)唤醒
         this.nightPhases = [
-            { name: '引导阶段', startRatio: 0, endRatio: 0.1, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 4 },
-            { name: '浅睡阶段', startRatio: 0.1, endRatio: 0.4, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 4, beatFreqEnd: 4 },
-            { name: '深睡阶段', startRatio: 0.4, endRatio: 0.85, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 4, beatFreqEnd: 2 },
-            { name: '唤醒阶段', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 2, beatFreqEnd: 15 }
+            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.1, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.5, binauralVolumeEnd: 0.4 },
+            { name: '浅睡阶段 θ波', startRatio: 0.1, endRatio: 0.4, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.4, binauralVolumeEnd: 0.35 },
+            { name: '深睡阶段 δ波', startRatio: 0.4, endRatio: 0.85, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.35, binauralVolumeEnd: 0.3 },
+            { name: '唤醒阶段 β波', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 15, beatFreqEnd: 15, binauralVolumeStart: 0.3, binauralVolumeEnd: 0.5 }
         ];
 
         // 午休模式配置（三阶段，无唤醒，结束时直接停止）
         this.napPhases = [
-            { name: '引导阶段', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 4 },
-            { name: '浅睡阶段', startRatio: 0.15, endRatio: 0.6, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 4, beatFreqEnd: 2 },
-            { name: '深睡阶段', startRatio: 0.6, endRatio: 1.0, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2 }
+            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.5, binauralVolumeEnd: 0.4 },
+            { name: '浅睡阶段 θ波', startRatio: 0.15, endRatio: 0.6, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.4, binauralVolumeEnd: 0.35 },
+            { name: '深睡阶段 δ波', startRatio: 0.6, endRatio: 1.0, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.35, binauralVolumeEnd: 0.3 }
         ];
 
         this.currentPhaseIndex = -1;
@@ -315,6 +316,7 @@ class SessionController {
         // 检查阶段变化
         if (phase.index !== this.currentPhaseIndex) {
             this.currentPhaseIndex = phase.index;
+            this.playPhaseTransitionSound();
             this.onPhaseChange?.(phase);
         }
 
@@ -342,15 +344,42 @@ class SessionController {
         const phaseDuration = phaseConfig.endRatio - phaseConfig.startRatio;
         const phaseProgress = (ratio - phaseConfig.startRatio) / phaseDuration;
 
-        // 计算当前阶段的音量
+        // 计算当前阶段的背景音乐音量
         const volume = phaseConfig.volumeStart + (phaseConfig.volumeEnd - phaseConfig.volumeStart) * phaseProgress;
 
         // 计算当前阶段的节拍频率
         const beatFreq = phaseConfig.beatFreqStart + (phaseConfig.beatFreqEnd - phaseConfig.beatFreqStart) * phaseProgress;
 
+        // 计算当前阶段的双幻节拍音量
+        const binauralVolume = phaseConfig.binauralVolumeStart + (phaseConfig.binauralVolumeEnd - phaseConfig.binauralVolumeStart) * phaseProgress;
+
         // 应用到音频引擎
         this.audioEngine.setVolume(volume);
         this.audioEngine.fadeBinauralBeats(this.baseFreq, beatFreq, 1);
+        this.audioEngine.fadeBinauralVolume(binauralVolume, 1);
+    }
+
+    // 播放阶段切换提示音
+    playPhaseTransitionSound() {
+        if (!this.audioEngine?.audioContext) return;
+
+        const ctx = this.audioEngine.audioContext;
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.frequency.value = 528; // 舒曼共振频率
+        oscillator.type = 'sine';
+        gain.gain.value = 0;
+
+        const now = ctx.currentTime;
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.1);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.5);
     }
 }
 
