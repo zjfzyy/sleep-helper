@@ -167,21 +167,22 @@ class SessionController {
         this.onProgressUpdate = null;
         this.onPhaseChange = null;
         this.sleepMode = 'night'; // 'night' 或 'nap'
+        this.binauralEnabled = true; // 双耳节拍是否启用
 
         // 晚间模式配置（四阶段）
         // Alpha波(8-12Hz)引导放松，Theta波(4-8Hz)浅睡，Delta波(0.5-4Hz)深睡，Beta波(15-30Hz)唤醒
         this.nightPhases = [
-            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.1, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.15, binauralVolumeEnd: 0.12 },
-            { name: '浅睡阶段 θ波', startRatio: 0.1, endRatio: 0.4, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.12, binauralVolumeEnd: 0.1 },
-            { name: '深睡阶段 δ波', startRatio: 0.4, endRatio: 0.85, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.1, binauralVolumeEnd: 0.08 },
-            { name: '唤醒阶段 β波', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 15, beatFreqEnd: 15, binauralVolumeStart: 0.08, binauralVolumeEnd: 0.15 }
+            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.1, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.08, binauralVolumeEnd: 0.06 },
+            { name: '浅睡阶段 θ波', startRatio: 0.1, endRatio: 0.4, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.06, binauralVolumeEnd: 0.05 },
+            { name: '深睡阶段 δ波', startRatio: 0.4, endRatio: 0.85, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.05, binauralVolumeEnd: 0.04 },
+            { name: '唤醒阶段 β波', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 15, beatFreqEnd: 15, binauralVolumeStart: 0.04, binauralVolumeEnd: 0.08 }
         ];
 
         // 午休模式配置（三阶段，无唤醒，结束时直接停止）
         this.napPhases = [
-            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.15, binauralVolumeEnd: 0.12 },
-            { name: '浅睡阶段 θ波', startRatio: 0.15, endRatio: 0.6, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.12, binauralVolumeEnd: 0.1 },
-            { name: '深睡阶段 δ波', startRatio: 0.6, endRatio: 1.0, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.1, binauralVolumeEnd: 0.08 }
+            { name: '引导阶段 α波', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 10, binauralVolumeStart: 0.08, binauralVolumeEnd: 0.06 },
+            { name: '浅睡阶段 θ波', startRatio: 0.15, endRatio: 0.6, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 6, beatFreqEnd: 6, binauralVolumeStart: 0.06, binauralVolumeEnd: 0.05 },
+            { name: '深睡阶段 δ波', startRatio: 0.6, endRatio: 1.0, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2, binauralVolumeStart: 0.05, binauralVolumeEnd: 0.04 }
         ];
 
         this.currentPhaseIndex = -1;
@@ -349,13 +350,22 @@ class SessionController {
         // 计算当前阶段的节拍频率
         const beatFreq = phaseConfig.beatFreqStart + (phaseConfig.beatFreqEnd - phaseConfig.beatFreqStart) * phaseProgress;
 
-        // 计算当前阶段的双幻节拍音量
-        const binauralVolume = phaseConfig.binauralVolumeStart + (phaseConfig.binauralVolumeEnd - phaseConfig.binauralVolumeStart) * phaseProgress;
+        // 计算当前阶段的双耳节拍音量
+        let binauralVolume = phaseConfig.binauralVolumeStart + (phaseConfig.binauralVolumeEnd - phaseConfig.binauralVolumeStart) * phaseProgress;
+        // 如果双耳节拍被禁用，音量设为0
+        if (!this.binauralEnabled) {
+            binauralVolume = 0;
+        }
 
         // 应用到音频引擎
         this.audioEngine.setVolume(volume);
         this.audioEngine.fadeBinauralBeats(this.baseFreq, beatFreq, 1);
-        this.audioEngine.fadeBinauralVolume(binauralVolume, 1);
+        this.audioEngine.fadeBinauralVolume(binauralVolume, 0.5);
+    }
+
+    // 设置双耳节拍启用/禁用
+    setBinauralEnabled(enabled) {
+        this.binauralEnabled = enabled;
     }
 
     // 播放阶段切换提示音
@@ -536,6 +546,17 @@ class SleepAidApp {
             storage.setSetting('beatFreq', parseFloat(beatFreqSlider.value));
         });
 
+        // 双耳节拍开关
+        const binauralEnabled = document.getElementById('binaural-enabled');
+        binauralEnabled.addEventListener('change', () => {
+            const enabled = binauralEnabled.checked;
+            storage.setSetting('binauralEnabled', enabled);
+            // 如果会话正在进行，实时更新双耳节拍状态
+            if (this.sessionController?.isRunning) {
+                this.sessionController.setBinauralEnabled(enabled);
+            }
+        });
+
         // 可折叠面板切换
         const binauralPanel = document.getElementById('binaural-panel');
         binauralPanel.querySelector('.panel-header').addEventListener('click', () => {
@@ -578,6 +599,7 @@ class SleepAidApp {
         const baseFreq = storage.getSetting('baseFreq', 200);
         const beatFreq = storage.getSetting('beatFreq', 4);
         const sleepMode = storage.getSetting('sleepMode', 'night');
+        const binauralEnabled = storage.getSetting('binauralEnabled', true);
 
         // 恢复场景
         this.currentScene = scene;
@@ -588,6 +610,7 @@ class SleepAidApp {
 
         // 恢复睡眠模式
         this.sessionController.setMode(sleepMode);
+        this.sessionController.setBinauralEnabled(binauralEnabled);
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === sleepMode);
         });
@@ -602,6 +625,7 @@ class SleepAidApp {
         document.getElementById('base-freq-value').textContent = `${baseFreq} Hz`;
         document.getElementById('beat-freq').value = beatFreq;
         document.getElementById('beat-freq-value').textContent = `${beatFreq} Hz`;
+        document.getElementById('binaural-enabled').checked = binauralEnabled;
 
         // 恢复音乐文件
         this.loadSavedMusic();

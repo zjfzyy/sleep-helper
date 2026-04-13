@@ -90,12 +90,19 @@
                 </div>
 
                 <!-- 双耳节拍设置 -->
-                <div class="panel collapsible" id="binaural-panel">
+                <div class="panel collapsible open" id="binaural-panel">
                     <div class="panel-header">
                         <span class="panel-title">双耳节拍</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="panel-content">
+                        <div class="setting-row">
+                            <label>开关</label>
+                            <label class="switch">
+                                <input type="checkbox" id="binaural-enabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                         <div class="setting-row">
                             <label>基础频率</label>
                             <input type="range" id="base-freq" min="100" max="500" value="200" step="10">
@@ -105,10 +112,6 @@
                             <label>节拍频率</label>
                             <input type="range" id="beat-freq" min="0.5" max="40" value="4" step="0.5">
                             <span id="beat-freq-value">4 Hz</span>
-                        </div>
-                        <div class="setting-row">
-                            <label>音量</label>
-                            <input type="range" id="binaural-volume" min="0" max="1" value="0.3" step="0.1">
                         </div>
                     </div>
                 </div>
