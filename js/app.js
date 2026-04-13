@@ -490,10 +490,10 @@ class SleepAidApp {
             if (file) {
                 musicName.textContent = file.name;
                 await audioEngine.init();
-                const url = audioEngine.loadMusic(file);
+                audioEngine.loadMusic(file);
                 // 保存到 IndexedDB
                 await storage.saveMusicFile(file.name, file);
-                storage.setSetting('musicFile', { name: file.name, url });
+                storage.setSetting('musicFile', { name: file.name });
             }
         });
 
@@ -636,11 +636,14 @@ class SleepAidApp {
 
     async loadSavedMusic() {
         const saved = storage.getSetting('musicFile');
-        if (saved?.url) {
+        if (saved?.name) {
             try {
                 await audioEngine.init();
-                audioEngine.loadMusicFromURL(saved.url);
-                document.getElementById('music-name').textContent = saved.name;
+                const musicData = await storage.getMusicFile(saved.name);
+                if (musicData?.blob) {
+                    const url = audioEngine.loadMusic(musicData.blob);
+                    document.getElementById('music-name').textContent = saved.name;
+                }
             } catch (e) {
                 console.error('Failed to load saved music:', e);
             }
