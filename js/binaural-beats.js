@@ -92,6 +92,13 @@ class BinauralBeats {
         if (this.isPlaying) return;
         if (!this.leftOscillator) this.init();
 
+        // 渐入效果：先设置音量为0，然后渐变到目标值
+        const now = this.audioContext.currentTime;
+        this.leftGain.gain.setValueAtTime(0, now);
+        this.rightGain.gain.setValueAtTime(0, now);
+        this.leftGain.gain.linearRampToValueAtTime(0.5, now + 1.5); // 1.5秒渐入
+        this.rightGain.gain.linearRampToValueAtTime(0.5, now + 1.5);
+
         this.leftOscillator.start();
         this.rightOscillator.start();
         this.isPlaying = true;
