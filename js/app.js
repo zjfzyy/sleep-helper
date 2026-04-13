@@ -1,3 +1,113 @@
+class VideoBackgroundManager {
+    constructor() {
+        this.video = document.getElementById('bg-video');
+        this.videoContainer = document.getElementById('video-container');
+        this.sceneContainer = document.getElementById('scene-container');
+        this.isPlaying = false;
+        this.currentURL = null;
+        this.isLoaded = false;
+    }
+
+    // 加载视频文件
+    loadVideo(file) {
+        if (!file) return;
+
+        // 如果已有视频URL，释放旧对象
+        if (this.currentURL) {
+            URL.revokeObjectURL(this.currentURL);
+        }
+
+        this.currentURL = URL.createObjectURL(file);
+        this.video.src = this.currentURL;
+        this.isLoaded = false;
+
+        // 隐藏 Canvas 场景
+        this.sceneContainer.style.opacity = '0';
+
+        // 视频加载完成后自动播放
+        this.video.oncanplay = () => {
+            this.isLoaded = true;
+            this.videoContainer.style.opacity = '1';
+            this.play();
+        };
+
+        this.video.load();
+        this.isPlaying = true;
+    }
+
+    // 从URL加载视频
+    loadVideoFromURL(url) {
+        this.currentURL = url;
+        this.video.src = url;
+        this.isLoaded = false;
+
+        // 隐藏 Canvas 场景
+        this.sceneContainer.style.opacity = '0';
+
+        this.video.oncanplay = () => {
+            this.isLoaded = true;
+            this.videoContainer.style.opacity = '1';
+            this.play();
+        };
+
+        this.video.load();
+        this.isPlaying = true;
+    }
+
+    // 播放
+    play() {
+        if (this.video.src) {
+            this.video.play().catch(e => console.warn('Video play failed:', e));
+            this.isPlaying = true;
+        }
+    }
+
+    // 暂停
+    pause() {
+        if (this.isPlaying) {
+            this.video.pause();
+            this.isPlaying = false;
+        }
+    }
+
+    // 切换播放/暂停
+    toggle() {
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+        return this.isPlaying;
+    }
+
+    // 移除视频
+    remove() {
+        this.video.pause();
+        this.video.src = '';
+        this.videoContainer.style.opacity = '0';
+        // 恢复 Canvas 场景显示
+        this.sceneContainer.style.opacity = '1';
+        if (this.currentURL) {
+            URL.revokeObjectURL(this.currentURL);
+            this.currentURL = null;
+        }
+        this.isPlaying = false;
+        this.isLoaded = false;
+    }
+
+    // 是否有视频
+    hasVideo() {
+        return !!this.video.src && this.isLoaded;
+    }
+
+    // 获取播放状态
+    getIsPlaying() {
+        return this.isPlaying;
+    }
+}
+
+window.VideoBackgroundManager = VideoBackgroundManager;
+
 class PWAInstaller {
     constructor() {
         this.deferredPrompt = null;
@@ -56,20 +166,41 @@ class SessionController {
         this.animationFrameId = null;
         this.onProgressUpdate = null;
         this.onPhaseChange = null;
+        this.sleepMode = 'night'; // 'night' 或 'nap'
 
-        // 三阶段配置
-        this.phases = [
-            { name: '引导阶段', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.5, beatFreqStart: 6, beatFreqEnd: 2 },
-            { name: '深睡阶段', startRatio: 0.15, endRatio: 0.85, volumeStart: 0.5, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 1 },
-            { name: '唤醒阶段', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 1, beatFreqEnd: 10 }
+        // 晚间模式配置（四阶段）
+        this.nightPhases = [
+            { name: '引导阶段', startRatio: 0, endRatio: 0.1, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 4 },
+            { name: '浅睡阶段', startRatio: 0.1, endRatio: 0.4, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 4, beatFreqEnd: 4 },
+            { name: '深睡阶段', startRatio: 0.4, endRatio: 0.85, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 4, beatFreqEnd: 2 },
+            { name: '唤醒阶段', startRatio: 0.85, endRatio: 1.0, volumeStart: 0.2, volumeEnd: 0.8, beatFreqStart: 2, beatFreqEnd: 15 }
+        ];
+
+        // 午休模式配置（三阶段，无唤醒，结束时直接停止）
+        this.napPhases = [
+            { name: '引导阶段', startRatio: 0, endRatio: 0.15, volumeStart: 0.8, volumeEnd: 0.6, beatFreqStart: 10, beatFreqEnd: 4 },
+            { name: '浅睡阶段', startRatio: 0.15, endRatio: 0.6, volumeStart: 0.6, volumeEnd: 0.4, beatFreqStart: 4, beatFreqEnd: 2 },
+            { name: '深睡阶段', startRatio: 0.6, endRatio: 1.0, volumeStart: 0.4, volumeEnd: 0.2, beatFreqStart: 2, beatFreqEnd: 2 }
         ];
 
         this.currentPhaseIndex = -1;
+        this.phases = this.getPhases();
     }
 
     // 设置总时长（秒）
     setDuration(minutes) {
         this.totalDuration = minutes * 60;
+    }
+
+    // 根据模式获取对应的阶段配置
+    getPhases() {
+        return this.sleepMode === 'nap' ? this.napPhases : this.nightPhases;
+    }
+
+    // 设置睡眠模式
+    setMode(mode) {
+        this.sleepMode = mode;
+        this.phases = this.getPhases();
     }
 
     // 开始会话
@@ -86,9 +217,17 @@ class SessionController {
         this.startTime = Date.now();
         this.currentPhaseIndex = -1;
 
-        this.audioEngine.startBinauralBeats(200, 6);
+        const baseFreq = parseInt(document.getElementById('base-freq').value);
+        const beatFreq = parseFloat(document.getElementById('beat-freq').value);
+        this.baseFreq = baseFreq;
+        this.audioEngine.startBinauralBeats(baseFreq, beatFreq);
         if (this.audioEngine.audioElement?.src) {
             this.audioEngine.audioElement.play();
+        }
+
+        // 同步视频播放
+        if (window.videoManager?.hasVideo()) {
+            window.videoManager.play();
         }
 
         this.tick();
@@ -103,6 +242,10 @@ class SessionController {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
+        // 暂停视频
+        if (window.videoManager?.hasVideo()) {
+            window.videoManager.pause();
+        }
     }
 
     // 恢复
@@ -112,6 +255,10 @@ class SessionController {
         const pauseDuration = Date.now() - this.pausedTime;
         this.startTime += pauseDuration;
         this.audioEngine.play();
+        // 恢复视频播放
+        if (window.videoManager?.hasVideo()) {
+            window.videoManager.play();
+        }
         this.tick();
     }
 
@@ -125,16 +272,27 @@ class SessionController {
         }
         this.audioEngine.stop();
         this.audioEngine.fadeBinauralVolume(0, 1);
+        // 停止视频
+        if (window.videoManager?.hasVideo()) {
+            window.videoManager.pause();
+        }
     }
 
     // 获取当前进度
     getProgress() {
-        if (!this.isRunning) return { ratio: 0, remaining: this.totalDuration, phase: null };
+        if (!this.isRunning) return { ratio: 0, remaining: this.totalDuration, phase: null, currentBeatFreq: 0 };
         const elapsed = (Date.now() - this.startTime) / 1000;
         const ratio = Math.min(1, elapsed / this.totalDuration);
         const remaining = Math.max(0, this.totalDuration - elapsed);
         const phase = this.getCurrentPhase(ratio);
-        return { ratio, remaining, phase };
+
+        // 计算当前节拍频率
+        const phaseConfig = phase.config;
+        const phaseDuration = phaseConfig.endRatio - phaseConfig.startRatio;
+        const phaseProgress = (ratio - phaseConfig.startRatio) / phaseDuration;
+        const currentBeatFreq = phaseConfig.beatFreqStart + (phaseConfig.beatFreqEnd - phaseConfig.beatFreqStart) * phaseProgress;
+
+        return { ratio, remaining, phase, currentBeatFreq };
     }
 
     // 获取当前阶段
@@ -192,7 +350,7 @@ class SessionController {
 
         // 应用到音频引擎
         this.audioEngine.setVolume(volume);
-        this.audioEngine.fadeBinauralBeats(200, beatFreq, 1);
+        this.audioEngine.fadeBinauralBeats(this.baseFreq, beatFreq, 1);
     }
 }
 
@@ -202,6 +360,7 @@ class SleepAidApp {
     constructor() {
         this.sceneManager = null;
         this.sessionController = null;
+        this.videoManager = null;
         this.currentScene = 'starryNight';
         this.init();
     }
@@ -223,6 +382,9 @@ class SleepAidApp {
         // 切换到默认场景
         this.sceneManager.switch(this.currentScene);
 
+        // 初始化视频背景管理器
+        this.videoManager = new VideoBackgroundManager();
+
         // 初始化会话控制器
         this.sessionController = new SessionController(audioEngine);
 
@@ -237,6 +399,9 @@ class SleepAidApp {
 
         // 初始化高级面板滑动
         this.initAdvancedPanel();
+
+        // 将视频管理器暴露到 window 上以便 SessionController 访问
+        window.videoManager = this.videoManager;
     }
 
     bindEvents() {
@@ -248,6 +413,16 @@ class SleepAidApp {
                 this.currentScene = btn.dataset.scene;
                 this.sceneManager.switch(this.currentScene);
                 storage.setSetting('scene', this.currentScene);
+            });
+        });
+
+        // 睡眠模式选择
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.setMode(btn.dataset.mode);
+                storage.setSetting('sleepMode', btn.dataset.mode);
             });
         });
 
@@ -272,6 +447,40 @@ class SleepAidApp {
                 await storage.saveMusicFile(file.name, file);
                 storage.setSetting('musicFile', { name: file.name, url });
             }
+        });
+
+        // 视频文件选择
+        const videoInput = document.getElementById('video-input');
+        const videoName = document.getElementById('video-name');
+        const videoControls = document.getElementById('video-controls');
+        const videoToggleBtn = document.getElementById('video-toggle-btn');
+        const videoRemoveBtn = document.getElementById('video-remove-btn');
+
+        videoInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                videoName.textContent = file.name;
+                this.videoManager.loadVideo(file);
+                videoControls.classList.remove('hidden');
+                // 保存到 IndexedDB
+                await storage.saveVideoFile(file.name, file);
+                storage.setSetting('videoFile', { name: file.name });
+            }
+        });
+
+        // 视频播放/暂停
+        videoToggleBtn.addEventListener('click', () => {
+            const isPlaying = this.videoManager.toggle();
+            videoToggleBtn.textContent = isPlaying ? '暂停视频' : '播放视频';
+        });
+
+        // 移除视频
+        videoRemoveBtn.addEventListener('click', () => {
+            this.videoManager.remove();
+            videoName.textContent = '点击选择视频文件（可选）';
+            videoControls.classList.add('hidden');
+            videoInput.value = '';
+            storage.removeSetting('videoFile');
         });
 
         // 双耳节拍设置
@@ -330,6 +539,7 @@ class SleepAidApp {
         const duration = storage.getSetting('duration', 30);
         const baseFreq = storage.getSetting('baseFreq', 200);
         const beatFreq = storage.getSetting('beatFreq', 4);
+        const sleepMode = storage.getSetting('sleepMode', 'night');
 
         // 恢复场景
         this.currentScene = scene;
@@ -337,6 +547,12 @@ class SleepAidApp {
             btn.classList.toggle('active', btn.dataset.scene === scene);
         });
         this.sceneManager.switch(scene);
+
+        // 恢复睡眠模式
+        this.sessionController.setMode(sleepMode);
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === sleepMode);
+        });
 
         // 恢复时长
         document.getElementById('duration-slider').value = duration;
@@ -351,6 +567,9 @@ class SleepAidApp {
 
         // 恢复音乐文件
         this.loadSavedMusic();
+
+        // 恢复视频文件
+        this.loadSavedVideo();
     }
 
     async loadSavedMusic() {
@@ -362,6 +581,22 @@ class SleepAidApp {
                 document.getElementById('music-name').textContent = saved.name;
             } catch (e) {
                 console.error('Failed to load saved music:', e);
+            }
+        }
+    }
+
+    async loadSavedVideo() {
+        const saved = storage.getSetting('videoFile');
+        if (saved?.name) {
+            try {
+                const videoData = await storage.getVideoFile(saved.name);
+                if (videoData?.blob) {
+                    this.videoManager.loadVideo(videoData.blob);
+                    document.getElementById('video-name').textContent = saved.name;
+                    document.getElementById('video-controls').classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Failed to load saved video:', e);
             }
         }
     }
@@ -396,12 +631,11 @@ class SleepAidApp {
             `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         document.getElementById('progress-fill').style.width = `${data.ratio * 100}%`;
         document.getElementById('current-beat').textContent =
-            data.phase?.config?.beatFreqStart?.toFixed(1) || '4';
+            data.currentBeatFreq > 0 ? data.currentBeatFreq.toFixed(1) : '10.0';
     }
 
     onPhaseChange(data) {
-        const phaseNames = ['引导阶段', '深睡阶段', '唤醒阶段'];
-        document.getElementById('phase-name').textContent = phaseNames[data.index] || '';
+        document.getElementById('phase-name').textContent = data.config?.name || '';
     }
 }
 

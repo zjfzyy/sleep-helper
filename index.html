@@ -11,6 +11,11 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- 视频背景层 -->
+    <div id="video-container">
+        <video id="bg-video" autoplay muted loop playsinline></video>
+    </div>
+
     <!-- 场景容器 -->
     <div id="scene-container">
         <canvas id="scene-canvas"></canvas>
@@ -38,6 +43,18 @@
                 </div>
             </div>
 
+            <!-- 睡眠模式选择 -->
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="night">
+                    <span class="mode-icon">🌙</span>
+                    <span>晚间模式</span>
+                </button>
+                <button class="mode-btn" data-mode="nap">
+                    <span class="mode-icon">☀️</span>
+                    <span>午休模式</span>
+                </button>
+            </div>
+
             <div class="controls">
                 <!-- 时长设置 -->
                 <div class="panel">
@@ -55,6 +72,19 @@
                         <input type="file" id="music-input" accept="audio/*" hidden>
                         <span id="music-name">点击选择音乐文件</span>
                     </label>
+                </div>
+
+                <!-- 视频背景选择 -->
+                <div class="panel">
+                    <div class="panel-title">视频背景</div>
+                    <label class="file-input-label video-input-label">
+                        <input type="file" id="video-input" accept="video/*" hidden>
+                        <span id="video-name">点击选择视频文件（可选）</span>
+                    </label>
+                    <div id="video-controls" class="video-controls hidden">
+                        <button id="video-toggle-btn" class="btn btn-small">暂停视频</button>
+                        <button id="video-remove-btn" class="btn btn-small btn-text">移除视频</button>
+                    </div>
                 </div>
 
                 <!-- 双耳节拍设置 -->

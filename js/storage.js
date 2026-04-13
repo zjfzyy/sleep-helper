@@ -22,6 +22,9 @@ class Storage {
                 if (!db.objectStoreNames.contains('musicFiles')) {
                     db.createObjectStore('musicFiles', { keyPath: 'name' });
                 }
+                if (!db.objectStoreNames.contains('videoFiles')) {
+                    db.createObjectStore('videoFiles', { keyPath: 'name' });
+                }
             };
         });
     }
@@ -75,6 +78,42 @@ class Storage {
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
+    }
+
+    // IndexedDB 操作：保存视频文件
+    async saveVideoFile(name, blob) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['videoFiles'], 'readwrite');
+            const store = transaction.objectStore('videoFiles');
+            const request = store.put({ name, blob, timestamp: Date.now() });
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getVideoFile(name) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['videoFiles'], 'readonly');
+            const store = transaction.objectStore('videoFiles');
+            const request = store.get(name);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deleteVideoFile(name) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['videoFiles'], 'readwrite');
+            const store = transaction.objectStore('videoFiles');
+            const request = store.delete(name);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // 移除设置
+    removeSetting(key) {
+        localStorage.removeItem(`sleepaid_${key}`);
     }
 }
 
